@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Capture Photo</title>
+        
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <script src="js/exif.js"></script>
+        <script src="js/load-image.all.min.js"></script>
+        <script src="js/piexif.js"></script>
+        
+        <script type="text/javascript" charset="utf-8">
+            //Counter for the number of pict (use for the the creation of HTML elements
+            var compteurPictureAvant = 0;
+            var compteurPictureApres = 0;
+            
+            function onPhotoDataSuccessAvant(imageURI){
+                //First thing, get the date!
+                var date = getCurrentDateInString();
+                console.log("retrieve image URI");
+                console.log(imageURI);
+                
+                //add to the counter (for the ID of the img)
+                compteurPictureAvant++;
+                
+                //Create the img element add set the attribute 'id' with the number of the counter
+                var img = document.createElement("img");
+                img.setAttribute("id", "pic"+compteurPictureAvant);
+           
+                //console.log(theFile);
+                //Convert into JSON
+                theResult = JSON.parse(imageURI);
+                
+                //Set the attribute src with the filename (which is the path) and add it to the document
+                img.setAttribute("src", theResult.filename);
+                document.getElementById("divPhotoAvant").appendChild(img);
+                
+                
+                //After the display, we will prepare the JSON file for the image.
+                //First, set everyting into the JSON format
+                
+                var textToJSON = '{'+
+                '"photoURI":'+imageURI+','+
+                '"idSoignant":"'+localStorage.getItem("idSoignant")+'",'+
+                '"lieu":"'+localStorage.getItem("lieu")+'",'+
+                '"date":"'+date+'"}';
+                
+                var jsonFile = JSON.parse(textToJSON);
+                console.log("jsonFile Parsed : ");
+                console.log(jsonFile);
+                
+                //Call the function to insert metadata
+                //insertData(theResult.filename);
+            }
+        
+        function onPhotoDataSuccessApres(imageURI){
+            //First thing, get the date!
+            var date = getCurrentDateInString();
+            console.log("retrieve image URI");
+            console.log(imageURI);
+            
+            //add to the counter (for the ID of the img)
+            compteurPictureApres++;
+            
+            //Create the img element add set the attribute 'id' with the number of the counter
+            var img = document.createElement("img");
+            img.setAttribute("id", "pic"+compteurPictureApres);
+            
+            //console.log(theFile);
+            //Convert into JSON
+            theResult = JSON.parse(imageURI);
+            
+            //Set the attribute src with the filename (which is the path) and add it to the document
+            img.setAttribute("src", theResult.filename);
+            document.getElementById("divPhotoApres").appendChild(img);
+            
+            
+            //After the display, we will prepare the JSON file for the image.
+            //First, set everyting into the JSON format
+            
+            var textToJSON = '{'+
+            '"photoURI":'+imageURI+','+
+            '"idSoignant":"'+localStorage.getItem("idSoignant")+'",'+
+            '"lieu":"'+localStorage.getItem("lieu")+'",'+
+            '"date":"'+date+'"}';
+            
+            var jsonFile = JSON.parse(textToJSON);
+            console.log("jsonFile Parsed : ");
+            console.log(jsonFile);
+            
+            //Call the function to insert metadata
+            //insertData(theResult.filename);
+        }
+        
+        function onPhotoDataSuccessAddress(imageURI){
+            //First thing, get the date!
+            var date = getCurrentDateInString();
+            console.log("retrieve image URI");
+            console.log(imageURI);
+            
+            //rename the File!
+            //to call the function. 'renameSuccess' is an function that is used as the success event if the rename is okay
+            renameFile('somefile.xml','myapp/xml/','new.xml', renameSuccess);
+            
+            
+            
+            //Create the img element add set the attribute 'id' with the number of the counter
+            var img = document.getElementById("address");
+            
+            //console.log(theFile);
+            //Convert into JSON
+            theResult = JSON.parse(imageURI);
+            
+            //Set the attribute src with the filename (which is the path) and add it to the document
+            img.src = theResult.filename;
+            
+            
+            //After the display, we will prepare the JSON file for the image.
+            //First, set everyting into the JSON format
+            
+            var textToJSON = '{'+
+            '"photoURI":'+imageURI+','+
+            '"idSoignant":"'+localStorage.getItem("idSoignant")+'",'+
+            '"lieu":"'+localStorage.getItem("lieu")+'",'+
+            '"date":"'+date+'"}';
+            
+            var jsonFile = JSON.parse(textToJSON);
+            console.log("jsonFile Parsed : ");
+            console.log(jsonFile);
+            
+            //Call the function to insert metadata
+            //insertData(theResult.filename);
+        }
+        
+        
+        //To change the name of the picture!
+        function renameFile(currentName, currentDir, newName, successFunction) {
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fileSystem) {
+                fileSystem.root.getFile(currentDir + currentName, null, function (fileEntry) {
+                    fileSystem.root.getDirectory(currentDir, {create: true}, function (dirEntry) {
+                        parentEntry = new DirectoryEntry(currentName, currentDir + currentName);
+                        fileEntry.moveTo(dirEntry, newName, function () {
+                            successFunction();
+                        }, renameFail);
+                    }, renameFail);
+                }, renameFail);
+            }, renameFail);
+        }
+        
+        //and the sample success function
+        function renameSuccess() {
+            alert('renamed!');
+        }
+        
+        //and the sample fail function
+        function renameFail() {
+            alert('failed');
+        }
+        
+        
+
+            //Function that return a string containing the date when this picture was picked
+            //Is call when the picture is taken
+            function getCurrentDateInString(){
+                //create an date object, which we'll use to get the different component
+                var today = new Date();
+                
+                //Get the differents part of the date to compose the string
+                var day = today.getDate();
+                var month = today.getMonth()+1;//January was 0, so + 1
+                var year = today.getFullYear();
+                
+                //Convert the result (adding 0 in front of date and month < 10
+                if(day < 10){
+                    day = '0'+day;
+                }
+                if(month < 10){
+                    month = '0'+month;
+                }
+                
+                //Building the string. I use this date format! (dd/mm/yyyy)
+                var stringDate = day + '/' + month + '/' + year;
+                console.log("the Date : " + stringDate);
+                return stringDate;
+            }
+        /*
+            function insertData(fileURI){
+                var fileImg = new File(fileURI);
+                
+                console.log("loading successful");
+                console.log(fileImg);
+                
+                var zerothIfd = {};
+                var exifIfd = {};
+                var gpsIfd = {};
+                
+                zerothIfd[piexif.ImageIFD.Make] = "testMake";
+                exifIfd[piexif.ExifIFD.LensMake] = "testLens";
+                gpsIfd[piexif.GPSIFD.GPSDateStamp] = "testGPS";
+                
+                var exifObj = {"0th":zerothIfd, "Exif":exifIfd, "GPS":gpsIfd};
+                
+                var exifBytes = piexif.dump(exifObj);
+                //var jsonFile = JSON.parse(fileImg);
+                
+                
+                console.log("exifData ready")
+                //console.log(fileImg.name);
+                //console.log(fileImg.type);
+                //var path = "data:image/jpeg;base64, " + theResult.filename
+                //var exifModified = piexif.insert(exifBytes, fileImg);
+            }*/
+        
+            function onFail(message){
+                console.log("failed because : " + message);
+            }
+        
+            function getPictureAddress() {
+                // Take picture using device camera and retrieve image as base64-encoded string
+                navigator.camera.getPicture(onPhotoDataSuccessAddress, onFail, { quality: 50,
+                                            destinationType: Camera.DestinationType.FILE_URI,
+                                            encodingType : Camera.EncodingType.JPEG,
+                                            saveToPhotoAlbum: true });
+            }
+        
+            function getPictureAvant(){
+                navigator.camera.getPicture(onPhotoDataSuccessAvant, onFail, { quality: 50,
+                                            destinationType: Camera.DestinationType.FILE_URI,
+                                            encodingType : Camera.EncodingType.JPEG,
+                                            saveToPhotoAlbum: true });
+            }
+        
+            function getPictureApres(){
+                navigator.camera.getPicture(onPhotoDataSuccessApres, onFail, { quality: 50,
+                                        destinationType: Camera.DestinationType.FILE_URI,
+                                        encodingType : Camera.EncodingType.JPEG,
+                                        saveToPhotoAlbum: true });
+            }
+        
+        </script>
+    </head>
+    <body>
+        <style>
+            img{
+                width:75px;
+                height:75px;
+                padding: 10px;
+            }
+            div{
+                padding-bottom:20px;
+            }
+            .button{
+                height: 65px;
+                width: 140px;
+            }
+        </style>
+        <div>
+            <img src="img/logo-sur-pied.jpg">
+        </div>
+        
+        <h2>Photo de l'adresse</h2>
+        <input class="button" type="button" value="Prendre Photo" onclick="getPictureAddress();">
+        <div id="divPhotoAddress"></div>
+        <img id="address"></img>
+            
+        <h2>Photo avant</h2>
+        <input class="button" type="button" value="Prendre Photo" onclick="getPictureAvant();">
+        <div id="divPhotoAvant"></div>
+                
+        <h2>Photo apres</h2>
+        <input class="button" type="button" value="Prendre Photo" onclick="getPictureApres();">
+        <div id="divPhotoApres"></div>
+
+        
+    </body>
+</html>

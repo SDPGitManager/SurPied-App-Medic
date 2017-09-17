@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Capture Photo</title>
+        
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <script src="js/exif.js"></script>
+        <script src="js/load-image.all.min.js"></script>
+        <script src="js/piexif.js"></script>
+        <script type="text/javascript" charset="utf-8">
+            
+            function assignValue(value){
+                localStorage.setItem("lieu", value);
+                console.log(localStorage.getItem("lieu"));
+                console.log(localStorage.getItem("idSoignant"));
+                window.location.replace("photo.html");
+            }
+        
+        </script>
+        
+    </head>
+    
+    <body>
+            <div>
+                <img src="img/logo-sur-pied.jpg">
+            </div>
+            
+            <h2>Selectionnez votre lieu de travail</h2>
+            <input onclick="assignValue(this.value)" type="button" value="Anna-Laberge">
+    </body>
+</html>

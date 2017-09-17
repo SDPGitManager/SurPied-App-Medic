@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Capture Photo</title>
+        
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <script type="text/javascript" charset="utf-8">
+            
+            var pictureSource;   // picture source
+            var destinationType; // sets the format of returned value
+            
+            // Wait for device API libraries to load
+            //
+            document.addEventListener("deviceready",onDeviceReady,false);
+            
+            // device APIs are available
+            //
+            var nomfichier = "nath8.txt";
+            function onDeviceReady() {
+                
+                pictureSource= navigator.camera.PictureSourceType;
+                destinationType=navigator.camera.DestinationType;
+                
+                console.log(pictureSource);
+                console.log(cordova.file);
+                window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, onFileSystemSuccess, fail);
+                 window.resolveLocalFileSystemURI("file:///example.txt", onResolveSuccess, fail);
+               document.getElementById("createFile").addEventListener("click", createFile);
+                document.getElementById("readFile").addEventListener("click", readFile);
+            }
+        
+        function onFileSystemSuccess(fileSystem) {
+            console.log(fileSystem.name);
+        }
+        
+        function onResolveSuccess(fileEntry) {
+            console.log(fileEntry.name);
+        }
+        
+        function fail(error) {
+            console.log(error.code);
+        }
+    
+    function createFile(){
+                window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
+                             
+                             console.log('file system open: ' + fs.name);
+                             fs.root.getFile("textNath.xml", { create: true, exclusive: false }, function (fileEntry) {
+                                             
+                                             console.log("fileEntry is file?" + fileEntry.isFile.toString());
+                                             // fileEntry.name == 'someFile.txt'
+                                             // fileEntry.fullPath == '/someFile.txt'
+                                                                                          writeFile(fileEntry, null);
+                                             
+                                             }, onErrorCreateFile);
+                             
+                             }, onErrorLoadFs);
+    
+    }
+        
+        function onErrorCreateFile(error) {
+            console.log(error.code);
+        }
+        
+        function onErrorLoadFs(error) {
+            console.log(error.code);
+        }
+        
+        function createFile2() {
+        var type = window.TEMPORARY;
+        var size = 5*1024*1024;
+        
+        window.requestFileSystem(type, size, successCallback, errorCallback)
+        
+        function successCallback(fs) {
+            fs.root.getFile('log.txt', {create: true, exclusive: true}, function(fileEntry) {
+                            writeFile();
+                            alert('File creation successfull!');
+                            }, errorCallback);
+        }
+        
+        function errorCallback(error) {
+            alert("ERROR: " + error.code)
+        }
+        
+    }
+        
+        function writeFile(fileEntry, dataObj) {
+            // Create a FileWriter object for our FileEntry (log.txt).
+            fileEntry.createWriter(function (fileWriter) {
+                                   
+                                   fileWriter.onwriteend = function() {
+                                   console.log("Successful file write...");
+                                   readFile(fileEntry);
+                                   };
+                                   
+                                   fileWriter.onerror = function (e) {
+                                   console.log("Failed file write: " + e.toString());
+                                   };
+                                   
+                                   // If data object is not passed in,
+                                   // create a new Blob instead.
+                                   if (!dataObj) {
+                                   var txtArea = document.getElementById('textarea1');
+                                  str= txtArea.value;
+console.log(str)
+                                   dataObj = new Blob([str], { type: 'text/plain' });
+                                   }
+                                   
+                                   fileWriter.write(dataObj);
+                                   });
+        }
+        
+        
+        
+               function readFile(fileEntry) {
+            
+            fileEntry.file(function (file) {
+                           var reader = new FileReader();
+                           
+                           reader.onloadend = function() {
+                           console.log("Successful file read: " + this.result);
+                           var txtArea = document.getElementById('textarea');
+                           txtArea.value = this.result;
+                           displayFileData(fileEntry.fullPath + ": " + this.result);
+                           };
+                           
+                           reader.readAsText(file);
+                           
+                           }, onErrorReadFile);
+        }
+        
+        
+        function onErrorReadFile(error) {
+            console.log(error.code);
+        }
+
+
+
+    // Called when a photo is successfully retrieved
+        //
+        function onPhotoDataSuccess(imageURI) {
+            // Uncomment to view the base64-encoded image data
+            console.log("IMAGE URI ");
+            console.log(imageURI);
+            
+            // Get image handle
+            //
+            
+            createFile()
+            var smallImage = document.getElementById('smallImage');
+            
+            // Unhide image elements
+            //
+            smallImage.style.display = 'block';
+            
+            // Show the captured photo
+            // The in-line CSS rules are used to resize the image
+            //
+            smallImage.src = imageURI;//"data:image/jpeg;base64," + imageData;
+        
+        
+        }
+        
+        
+        
+        // Called when a photo is successfully retrieved
+        //
+        function onPhotoURISuccess(imageURI) {
+            // Uncomment to view the image file URI
+            // console.log(imageURI);
+            
+            // Get image handle
+            //
+            var largeImage = document.getElementById('largeImage');
+            
+            // Unhide image elements
+            //
+            largeImage.style.display = 'block';
+            
+            // Show the captured photo
+            // The in-line CSS rules are used to resize the image
+            //
+            largeImage.src = imageURI;
+        }
+        
+        // A button will call this function
+        //
+        function capturePhoto() {
+            // Take picture using device camera and retrieve image as base64-encoded string
+            navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 50,
+                                        destinationType: destinationType.FILE_URI });
+        }
+        
+        // A button will call this function
+        //
+        function capturePhotoEdit() {
+            // Take picture using device camera, allow edit, and retrieve image as base64-encoded string
+            navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 20, allowEdit: true,
+                                        destinationType: destinationType.FILE_URI });
+        }
+        
+        // A button will call this function
+        //
+        function getPhoto(source) {
+            // Retrieve image file location from specified source
+            navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50,
+                                        destinationType: destinationType.FILE_URI,
+                                        sourceType: source });
+        }
+        
+        // Called if something bad happens.
+        //
+        function onFail(message) {
+            alert('Failed because: ' + message);
+        }
+        function assignValue(obj, valeur)
+        {
+            document.getElementById('span' + obj).innerHTML = valeur;
+        }            </script>
+    </head>
+    <body>
+        <div class="">
+            <div>
+                <img src="img/logo-sur-pied.jpg">
+                    
+                    </div>
+            <div>
+                <img src="img/micro.jpg" onclick="startRecordAudio()" width="50">
+                    </div>
+            <div width="100%">
+                <table>
+                    <tr>
+                        <td>
+                            <div style="float:left">Soignant: <span id="spanSoignant"></span><a href=""></a></div>
+                        </td>
+                        <td><div style="float:left">Patient: <span id="spanPatient"></span></div></td>
+                    </tr>
+                    <tr>
+                        <td><div style="float:left">Lieu: <span id="spanLieu"></span></div></td>
+                        <td><div style="float:left">Soin: <span id="spanSoin"></span></div></td>
+                    </tr>
+                    <tr><td><div style="float:left">Nb Photos: <span id="spanPhotos"></span></div></td></tr>
+                </table>
+            </div>
+            <div>
+                <input type="button" class="bigbutton" value="Synchro" onclick="javascript: window.open('CLientsCurrent.xml');">
+                    <input type="button" class="bigbutton" value="Photo" onclick="capturePhoto();">
+                        <input type="button" class="bigbutton" ID="createFile" value="Creer Fichier">
+                            texte a entrer : <textarea id = "textarea1"></textarea>
+                        
+                         contenu du fichier :<textarea id = "textarea"></textarea>
+                        <input type="button" class="bigbutton" ID="readFile" value="Lire Fichier" onclick="readFile();">
+                       
+                        <img style="display:block;  " height="50" width="50" id="smallImage" src="" />
+                        
+                        </div>
+            <div id="mainDiv">
+                <div id="divIdentification">
+                    <style>
+                        .bigbutton {
+                            color: #900;
+                            font-weight: bold;
+                            font-size: 130%;
+                            height: 65px;
+                            text-transform: uppercase;
+                            width: 140px;
+                        }
+                    
+                    hr {
+                        display: block;
+                        margin-top: 0.5em;
+                        margin-bottom: 0.5em;
+                        margin-left: auto;
+                        margin-right: auto;
+                        border-style: inset;
+                        border-width: 5px;
+                    }
+                    
+                    .boutonAller img {
+                        width: 50px;
+                        height: 50px;
+                        padding: 10px;
+                    }
+                    
+                    .boutonSelect {
+                        width: 100%;
+                        border: solid 1px #000;
+                        background-color: #eee;
+                        border-radius: 8px;
+                        margin: 20px 0px 20px 0px;
+                    }
+                    
+                    .boutonSelect p {
+                        padding: 0px 10px 0px 10px;
+                    }
+                    </style>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <div>
+                        <div>
+                            <h2 id="dateDiv"></h2>
+                        </div>
+                        <div>
+                            <p>Soignant</p>
+                        </div>
+                    </div>
+                    <div>
+                        <img src="img/photo1.jpg">
+                            </div>
+                    
+                    <div>
+                        <div id="soignantDiv">
+                            <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="IV 940606">
+                                <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="AG 50016">
+                                    <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="FV 59423">
+                                        <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="ML 70323">
+                                            <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="PC 64887">
+                                                </div>
+                        
+                    </div>
+                    <div>
+                        <div>
+                            <select>
+                                <option value="1">Mode soignant</option>
+                                <option value="2">Mode demonstration</option>
+                                <option value="3">Mode formation</option>
+                            </select>
+                        </div>
+                        <div class="boutonAller"><img src="img/fleche-droite.png"></div>
+                    </div>
+                    
+                    <div>
+                        <p>Localisation du soin</p>
+                    </div>
+                    
+                    <div>
+                        <div>
+                            <input class="bigbutton" onclick="assignValue('Lieu', this.value)" type=BUTTON value="ALA">
+                                <input class="bigbutton" onclick="assignValue('Lieu', this.value)" type=BUTTON value="AUC">
+                                    <input class="bigbutton" onclick="assignValue('Lieu', this.value)" type=BUTTON value="AVG">
+                                        <input class="bigbutton" onclick="assignValue('Lieu',this.value)" type=BUTTON value="Autre">
+                                            </div>
+                        <div class="boutonAller"><img src="img/fleche-droite.png"></div>
+                    </div>
+                    
+                    
+                    <div>
+                        <p>Patient</p>
+                    </div>
+                    
+                    <div>
+                        <div>
+                            <input class="bigbutton" type="button" value="AG00201">
+                                <input class="bigbutton" type="button" value="YT22000">
+                                    </div>
+                        
+                        <div class="boutonAller"><img onclick="loadPage('pageClientList.html')" src="img/fleche-droite.png"></div>
+                    </div>
+                    <div>
+                        <div>
+                            <input onclick="generateClientCode()" class="bigbutton" type="button" value="Autre">
+                                </div>
+                        
+                    </div>
+                    
+                    
+                    
+                    <div>
+                        <div class="boutonSelect"><input class="bigbutton" type="button" onclick="loadPage('page2.html')" value="Suivant"></div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+    </body>
+</html>

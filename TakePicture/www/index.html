@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Capture Photo</title>
+        
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <script src="js/exif.js"></script>
+        <script src="js/load-image.all.min.js"></script>
+        <script src="js/piexif.js"></script>
+        
+        <script type="text/javascript" charset="utf-8">
+            
+            function assignValue(value){
+                console.log(value);
+                localStorage.setItem("idSoignant", value);
+                console.log(localStorage.getItem("idSoignant"));
+                window.location.replace("lieu.html");
+            }
+        
+        </script>
+        
+    </head>
+    
+    <body>
+        <div>
+            <img src="img/logo-sur-pied.jpg">
+                </div>
+        
+        <h2>Selectionnez votre code d'identification</h2>
+        
+            <input onclick="assignValue(this.value)" type="button" value="IV 940606">
+                <input onclick="assignValue(this.value)" type="button" value="AG 50016">
+                    <input onclick="assignValue(this.value)" type="button" value="FV 59423">
+                        <input onclick="assignValue(this.value)" type="button" value="ML 70323">
+                            <input onclick="assignValue(this.value)" type="button" value="PC 64887">
+            
+            </body>
+</html>

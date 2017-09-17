@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Capture Photo</title>
+        
+        <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+        <script src="js/exif.js"></script>
+        <script src="js/load-image.all.min.js"></script>
+        <script src="js/piexif.js"></script>
+        <script type="text/javascript" charset="utf-8">
+            
+            
+            var pictureSource;   // picture source
+            var destinationType; // sets the format of returned value
+            
+            // Wait for device API libraries to load
+            //
+            document.addEventListener("deviceready",onDeviceReady,false);
+            
+            // device APIs are available
+            //
+            var nomfichier = "nath8.txt";
+            
+            
+            var pictureAddress;
+            var picturesBefore = [];
+            var counterPicturesBefore = 0;
+            var picturesAfter = [];
+            var counterPicturesAfter = 0;
+            
+            var selectedTraitment = "";
+            
+            
+            function onDeviceReady() {
+                
+                pictureSource= navigator.camera.PictureSourceType;
+                destinationType=navigator.camera.DestinationType;
+                
+                console.log(pictureSource);
+                console.log(cordova.file);
+                window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, onFileSystemSuccess, fail);
+                window.resolveLocalFileSystemURI("file:///example.txt", onResolveSuccess, fail);
+                document.getElementById("createFile").addEventListener("click", createFile);
+                document.getElementById("readFile").addEventListener("click", readFile);
+            }
+        
+        function onFileSystemSuccess(fileSystem) {
+            console.log(fileSystem.name);
+        }
+        
+        function onResolveSuccess(fileEntry) {
+            console.log(fileEntry.name);
+        }
+        
+        function fail(error) {
+            console.log(error.code);
+        }
+        
+        function createFile(){
+            window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
+                                     
+                                     console.log('file system open: ' + fs.name);
+                                     fs.root.getFile("textNath.xml", { create: true, exclusive: false }, function (fileEntry) {
+                                                     
+                                                     console.log("fileEntry is file?" + fileEntry.isFile.toString());
+                                                     // fileEntry.name == 'someFile.txt'
+                                                     // fileEntry.fullPath == '/someFile.txt'
+                                                     writeFile(fileEntry, null);
+                                                     
+                                                     }, onErrorCreateFile);
+                                     
+                                     }, onErrorLoadFs);
+                                     
+        }
+        
+        function onErrorCreateFile(error) {
+            console.log(error.code);
+        }
+        
+        function onErrorLoadFs(error) {
+            console.log(error.code);
+        }
+        
+        function createFile2() {
+            var type = window.TEMPORARY;
+            var size = 5*1024*1024;
+            
+            window.requestFileSystem(type, size, successCallback, errorCallback)
+            
+            function successCallback(fs) {
+                fs.root.getFile('log.txt', {create: true, exclusive: true}, function(fileEntry) {
+                                writeFile();
+                                alert('File creation successfull!');
+                                }, errorCallback);
+            }
+                        pictureAddress = imageURI;
+            
+            createFile()
+            function errorCallback(error) {
+                alert("ERROR: " + error.code)
+            }
+            
+        }
+        /*
+        function writeFile(fileEntry, dataObj) {
+            // Create a FileWriter object for our FileEntry (log.txt).
+            fileEntry.createWriter(function (fileWriter) {
+                                   
+                                   fileWriter.onwriteend = function() {
+                                   console.log("Successful file write...");
+                                   readFile(fileEntry);
+                                   };
+                                   
+                                   fileWriter.onerror = function (e) {
+                                   console.log("Failed file write: " + e.toString());
+                                   };
+                                   
+                                   // If data object is not passed in,
+                                   // create a new Blob instead.
+                                   if (!dataObj) {
+                                   var txtArea = document.getElementById('textarea1');
+                                   str= txtArea.value;
+                                   console.log(str)
+                                   dataObj = new Blob([str], { type: 'text/plain' });
+                                   }
+                                   
+                                   fileWriter.write(dataObj);
+                                   });
+        }
+        */
+        
+        
+        function readFile(fileEntry) {
+            
+            fileEntry.file(function (file) {
+                           var reader = new FileReader();
+                           
+                           reader.onloadend = function() {
+                           console.log("Successful file read: " + this.result);
+                           var txtArea = document.getElementById('textarea');
+                           txtArea.value = this.result;
+                           displayFileData(fileEntry.fullPath + ": " + this.result);
+                           };
+                           
+                           reader.readAsText(file);
+                           
+                           }, onErrorReadFile);
+        }
+        
+        
+        function onErrorReadFile(error) {
+            console.log(error.code);
+        }
+        
+        
+        
+        // Called when a photo is successfully retrieved
+        //
+        function onPhotoDataSuccessAddress(imageURI) {
+            // EXPERIEMENTAL PART
+            var reader = new FileReader();
+            
+            // get the URI of the Image
+            console.log("IMAGE URI ");
+            console.log(imageURI);
+            
+            //Parse the result
+            var theResult = JSON.parse(imageURI);
+            
+            //window.resolveLocalFileSystemURI(theResult.filename, uri2file, uriError);
+            
+            
+            //Trying to convert into JpegDATA...
+            var data = theResult.filename.toString("binary");
+            
+            console.log(data);
+            console.log(theResult.filename)
+            
+            //Here, im preparing the data for being import into a JPEG, using piexifjs.
+            var zerothIfd = {};
+            var exifIfd = {};
+            var gpsIfd = {};
+            
+            zerothIfd[piexif.ImageIFD.Make] = document.getElementById('spanSoignant').innerHTML;
+            exifIfd[piexif.ExifIFD.LensMake] = "Thomas";
+            gpsIfd[piexif.GPSIFD.GPSDateStamp] = "Francois";
+            
+            var exifObj = {"0th":zerothIfd, "Exif":exifIfd, "GPS":gpsIfd};
+            //Transform into binary content
+            var exifBytes = piexif.dump(exifObj);
+            
+            //var path = "data:image/jpeg;base64, " + theResult.filename
+            //console.log(path);
+            
+            //This is supposed to insert the data into jpeg. (uncommented to see the error result)
+            //var exifModified = piexif.insert(exifBytes, path);
+            console.log("Work completed");
+
+
+            //console.log(theResult.filename);
+            //var imgFile = fileSystem.root.getFile(theResult.filename, null, gotFileEntry, onFail);
+        
+            console.log("metadata");
+            
+            
+            var smallImage = document.getElementById('smallImageAddress');
+            console.log("listen");
+            //console.log(piexif.load(imageURI));
+            // Unhide image elements
+            //
+            smallImage.style.display = 'block';
+            
+            // Show the captured photo
+            // The in-line CSS rules are used to resize the image
+            //
+            smallImage.src = theResult.filename;//"data:image/jpeg;base64," + imageData;asasasa
+           
+            document.getElementById('spanLieu').innerHTML = imageURI;
+            
+        }
+        // All the functions below where made to try to convert URI into base 64 encode... no succes (I leave them so maybe they give us a clue).
+        function uri2file(entry){
+            entry.file(entryPhoto, entryFail);
+        }
+        
+        function entryPhoto(file){
+            var reader = new FileReader();
+            
+            reader.onloadend = function(evt){
+                console.log("picture loaded");
+            }
+            console.log("yeah")
+            var zerothIfd = {};
+            var exifIfd = {};
+            var gpsIfd = {};
+            
+            zerothIfd[piexif.ImageIFD.Make] = document.getElementById('spanSoignant').innerHTML;
+            exifIfd[piexif.ExifIFD.LensMake] = "patate";
+            gpsIfd[piexif.GPSIFD.GPSDateStamp] = "chou";
+            
+            var exifObj = {"0th":zerothIfd, "Exif":exifIfd, "GPS":gpsIfd};
+            
+            var exifBytes = piexif.dump(exifObj);
+            //reader.readAsDataURL(file);
+            var exifModified = piexif.insert(exifBytes, reader.readAsDataURL(file));
+            //insertExif(theFile);
+        }
+        
+        function insertExif(file){
+
+             var zerothIfd = {};
+             var exifIfd = {};
+             var gpsIfd = {};
+             
+             zerothIfd[piexif.ImageIFD.Make] = document.getElementById('spanSoignant').innerHTML;
+             exifIfd[piexif.ExifIFD.LensMake] = "patate";
+             gpsIfd[piexif.GPSIFD.GPSDateStamp] = "chou";
+             
+             var exifObj = {"0th":zerothIfd, "Exif":exifIfd, "GPS":gpsIfd};
+             
+             var exifBytes = piexif.dump(exifObj);
+             
+             //var path = "data:image/jpeg;base64, " + theResult.filename
+             //console.log(path);
+             console.log(file);
+             //var exifModified = piexif.insert(exifBytes, file);
+             console.log("Work completed");
+
+            
+                          
+        }
+        
+        
+        function uriError(error){
+            console.log("erreur");
+            alert('error ' + error.code);
+        }
+        
+        function entryFail(evt){
+            console.log("ohoh");
+            alert('Err: ' + evt.code);
+        }
+        
+        //old
+        function gotFileEntry(fileEntry){
+            console.log("got the file");
+            fileEntry.file(gotFile, fail);
+        }
+        
+        function gotFile(file){
+            var reader = new FileReader();
+            console.log("Read as Data URL");
+            reader.readAsDataURL(file);
+        }
+        //
+        function onPhotoDataSuccessBefore(imageURI) {
+            // Uncomment to view the base64-encoded image data
+            console.log("IMAGE URI ");
+            console.log(imageURI);
+            
+            // Get image handle
+            //
+            
+            picturesBefore.push(imageURI);
+            counterPicturesBefore++;
+            
+            
+            
+            createFile()
+            var smallImage = document.getElementById('smallImageBefore');
+            
+            // Unhide image elements
+            //
+            smallImage.style.display = 'block';
+            
+            // Show the captured photo
+            // The in-line CSS rules are used to resize the image
+            //
+            smallImage.src = picturesBefore[counterPicturesBefore-1];//"data:image/jpeg;base64," + imageData;asasasa
+            
+            
+        }
+        
+        function onPhotoDataSuccessAfter(imageURI) {
+            // Uncomment to view the base64-encoded image data
+            console.log("IMAGE URI ");
+            console.log(imageURI);
+            
+            // Get image handle
+            //
+            
+            createFile()
+            var smallImage = document.getElementById('smallImageAfter');
+            
+            // Unhide image elements
+            //
+            smallImage.style.display = 'block';
+            
+            // Show the captured photo
+            // The in-line CSS rules are used to resize the image
+            //
+            smallImage.src = imageURI;//"data:image/jpeg;base64," + imageData;asasasa
+            
+            
+        }
+        
+        
+        // Called when a photo is successfully retrieved
+        //
+        function onPhotoURISuccess(imageURI) {
+            // Uncomment to view the image file URI
+            // console.log(imageURI);
+            
+            // Get image handle
+            //
+            var largeImage = document.getElementById('largeImage');
+            
+            // Unhide image elements
+            //
+            largeImage.style.display = 'block';
+            
+            // Show the captured photo
+            // The in-line CSS rules are used to resize the image
+            //
+            largeImage.src = imageURI;
+        }
+        
+        // A button will call this function
+        //
+        function capturePhotoAddress() {
+            // Take picture using device camera and retrieve image as base64-encoded string
+            navigator.camera.getPicture(onPhotoDataSuccessAddress, onFail, { quality: 50,
+                                        correctOrientation: true,
+                                        destinationType: Camera.DestinationType.FILE_URI
+                                                                                /*saveToPhotoAlbum: true*/ });
+        }
+        
+        // A button will call this function
+        //
+        function capturePhotoBefore() {
+            // Take picture using device camera and retrieve image as base64-encoded string
+            navigator.camera.getPicture(onPhotoDataSuccessBefore, onFail, { quality: 50,
+                                        destinationType: Camera.DestinationType.FILE_URI, saveToPhotoAlbum: true });
+        }
+        
+        
+        function capturePhotoAfter() {
+            // Take picture using device camera and retrieve image as base64-encoded string
+            navigator.camera.getPicture(onPhotoDataSuccessAfter, onFail, { quality: 50,
+                                        destinationType: Camera.DestinationType.FILE_URI, saveToPhotoAlbum: true });
+        }
+        
+        // A button will call this function
+        //
+        function capturePhotoEdit() {
+            // Take picture using device camera, allow edit, and retrieve image as base64-encoded string
+            navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 20, allowEdit: true,
+                                        destinationType: destinationType.FILE_URI });
+        }
+        
+        // A button will call this function
+        //
+        function getPhoto(source) {
+            // Retrieve image file location from specified source
+            navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50,
+                                        destinationType: destinationType.FILE_URI,
+                                        sourceType: source });
+        }
+        
+        // Called if something bad happens.
+        //
+        function onFail(message) {
+            alert('Failed because: ' + message);
+        }
+        function assignValue(obj, valeur)
+        {
+            console.log("enter value");
+            localStorage.setItem("idSoignant", valeur);
+            console.log(localStorage.getItem("idSoignant"));
+            //document.getElementById('span' + obj).innerHTML = valeur;
+        }
+        
+        function retrieveNail(traitement){
+            selectedTraitment = traitement;
+            //Tester le changement de traitement
+            document.getElementById('spanSoignant').innerHTML = selectedTraitment;
+            
+            //Teste de la verification du checkbox
+            if(document.getElementById('coupeOngle').checked == true){
+                document.getElementById('spanLieu').innerHTML = document.getElementById('coupeOngle').value;
+            }
+        }
+        
+        function transformIntoJSON(){
+            //Get all the data
+            var soignant = document.getElementById('spanSoignant').innerHTML;
+            var patient = document.getElementById('spanPatient').innerHTML;
+            var lieu = document.getElementById('spanLieu').innerHTML;
+            //Transform into a JSON structure
+            var info = {"soignant":soignant, "patient": patient, "lieu":lieu, "photoAdresse":pictureAddress, "photosAvant":picturesBefore, "photosApres": picturesAfter};
+            
+            //Transform the JSON into String
+            var JSON = JSON.stringify(info);
+            
+            //Create a JSON file
+            var fs = require('fs');
+            fs.writeFile("test.JSON", info);
+            
+        }
+        
+        
+            </script>
+        
+    </head>
+    <body>
+        <div class="">
+            <div>
+                <img src="img/logo-sur-pied.jpg">
+                    
+                    </div>
+            <div>
+                <img src="img/micro.jpg" onclick="startRecordAudio()" width="50">
+                    </div>
+            <div width="100%">
+                <table>
+                    <tr>
+                        <td>
+                            <div style="float:left">Soignant: <span id="spanSoignant"></span><a href=""></a></div>
+                        </td>
+                        <td><div style="float:left">Patient: <span id="spanPatient"></span></div></td>
+                    </tr>
+                    <tr>
+                        <td><div style="float:left">Lieu: <span id="spanLieu"></span></div></td>
+                        <td><div style="float:left">Soin: <span id="spanSoin"></span></div></td>
+                    </tr>
+                    <tr><td><div style="float:left">Nb Photos: <span id="spanPhotos"></span></div></td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <input type="button" class="bigbutton" value="Synchro" onclick="javascript: window.open('CLientsCurrent.xml');">
+                    <input type="button" class="bigbutton" value="Photo" onclick="capturePhotoAddress();">
+                        <input type="button" class="bigbutton" value="JSON" onclick="transformIntoJSON();">
+                        <input type="button" class="bigbutton" ID="createFile" value="Creer Fichier">
+                            
+                            texte a entrer : <textarea id = "textarea1"></textarea>
+                            
+                            contenu du fichier :<textarea id = "textarea"></textarea>
+                            <input type="button" class="bigbutton" ID="readFile" value="Lire Fichier" onclick="readFile();">
+                                
+                                <img style="display:block;  " height="50" width="50" id="smallImageAddress" src="" />
+                                
+                                </div>
+            <div id="mainDiv">
+                <div id="divIdentification">
+                    <style>
+                        .bigbutton {
+                            color: #900;
+                            font-weight: bold;
+                            font-size: 130%;
+                            text-transform: uppercase;
+                            height: 65px;
+                            width: 140px;
+                        }
+                    
+                    hr {
+                        display: block;
+                        margin-top: 0.5em;
+                        margin-bottom: 0.5em;
+                        margin-left: auto;
+                        margin-right: auto;
+                        border-style: inset;
+                        border-width: 5px;
+                    }
+                    
+                    .boutonAller img {
+                        width: 50px;
+                        height: 50px;
+                        padding: 10px;
+                    }
+                    
+                    .boutonSelect {
+                        width: 100%;
+                        border: solid 1px #000;
+                        background-color: #eee;
+                        border-radius: 8px;
+                        margin: 20px 0px 20px 0px;
+                    }
+                    
+                    .boutonSelect p {
+                        padding: 0px 10px 0px 10px;
+                    }
+                    </style>
+                    
+                    
+                    
+                    
+                    <div>
+                        <div>
+                            <h2 id="dateDiv"></h2>
+                        </div>
+                        <div>
+                            <p>Soignant</p>
+                        </div>
+                    </div>
+                    <div>
+                        <img src="img/photo1.jpg">
+                            </div>
+                    
+                    <div>
+                        <div id="soignantDiv">
+                            <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="IV 940606">
+                                <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="AG 50016">
+                                    <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="FV 59423">
+                                        <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="ML 70323">
+                                            <input class="bigbutton" onclick="assignValue('Soignant',this.value)" type="button" value="PC 64887">
+                                                </div>
+                        
+                    </div>
+                    <div>
+                        <div>
+                            <select>
+                                <option value="1">Mode soignant</option>
+                                <option value="2">Mode demonstration</option>
+                                <option value="3">Mode formation</option>
+                            </select>
+                        </div>
+                        <div class="boutonAller"><img src="img/fleche-droite.png"></div>
+                    </div>
+                    
+                    <div>
+                        <p>Localisation du soin</p>
+                    </div>
+                    
+                    <div>
+                        <div>
+                            <input class="bigbutton" onclick="assignValue('Lieu', this.value)" type=BUTTON value="ALA">
+                                <input class="bigbutton" onclick="assignValue('Lieu', this.value)" type=BUTTON value="AUC">
+                                    <input class="bigbutton" onclick="assignValue('Lieu', this.value)" type=BUTTON value="AVG">
+                                        <input class="bigbutton" onclick="assignValue('Lieu',this.value)" type=BUTTON value="Autre">
+                                            </div>
+                        <div class="boutonAller"><img src="img/fleche-droite.png"></div>
+                    </div>
+                    
+                    
+                    <div>
+                        <p>Patients</p>
+                    </div>
+                    
+                    <div>
+                        <div>
+                            <input class="bigbutton" onclick="assignValue('Patient', this.value)" type="button" value="AG00201">
+                                <input class="bigbutton" onclick="assignValue('Patient', this.value)" type="button" value="YT22000">
+                                    </div>
+                        
+                        <div class="boutonAller"><img onclick="loadPage('pageClientList.html')" src="img/fleche-droite.png"></div>
+                    </div>
+                    <div>
+                        <div>
+                            <input onclick="generateClientCode()" class="bigbutton" type="button" value="Autre">
+                                </div>
+                    </div>
+                    
+                    
+                    
+                    <div>
+                        <p>Traitement</p>
+                    </div>
+                    
+                    
+                    
+                    <div id="listeTraitement">
+                        <div>
+                            <input type="button" value="coupe d'ongle" onclick="retrieveNail('coupeOngle')">
+                        </div>
+                        <div>
+                            <input type="button" value="Amincissement d'ongle" onclick="retrieveNail('AmincissementOngle')">
+                        </div>
+                        <div>
+                            <input type="button" value="Technique de coupe en coins" onclick="retrieveNail('CoupeCoins')">
+                        </div>
+                        
+                        <input type="checkbox" id="coupeOngle" value="coupeOnglet">coupe d'ongle
+                        <input type="checkbox" id="amincissementOngle" value="amincissementOnglet">Amincissement d'ongle
+                        <input type="checkbox" value="coupeCoins">Technique de coupe en coins
+                        <input type="checkbox" value="LimageBordsLibres">Limage bords libres
+                        <input type="checkbox" value="LimageCoteLateraux">Limage des côté latéraux
+                        <input type="checkbox" value="ApplicationHydratant">Application hydratant
+                        <input type="checkbox" value="PeautinageRugosités">Peautinage des rugosités
+                        <input type="checkbox" value="AmincissementCallosité">Amincissement de la callosité
+                        <input type="checkbox" value="ÉvidementCor">Évidement de cor(s)
+                            
+                        <div>
+                            <input type="button" value="Sauvegarde" onclick="synchroTraitement()">
+                        </div>
+                        
+                    </div>
+                    
+                    
+                    <div>
+                        <p>Partie du corps</p>
+                        <div>
+                            <input type="checkbox" value="Mains">Mains
+                                <input type="checkbox" value="Pieds">Pieds
+                                    </div>
+                        <div>
+                            <input style="float:left" type="checkbox" value="Mains">orteil
+                        </div>
+                        <img style="float:right" src="img/pied.jpg">
+                    </div>
+                    
+                    <div>
+                        <input type="button" class="bigbutton" value="Photo Avant" onclick="capturePhotoBefore();">
+                        <div id="divPicturesBefore">
+                            <img style="display:block;  " height="50" width="50" id="smallImageBefore" src="" />
+                        </div>
+                    </div>
+                    
+                    
+                    <div>
+                        <input type="button" class="bigbutton" value="Photo Avant" onclick="capturePhotoAfter();">
+                            <img style="display:block;  " height="50" width="50" id="smallImageAfter" src="" />
+                            </div>
+                    
+                    
+                    <div>
+                        <div class="boutonSelect"><input class="bigbutton" type="button" onclick="loadPage('page2.html')" value="Suivant"></div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+    </body>
+</html>
