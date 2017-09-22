@@ -9,6 +9,10 @@
         <script src="js/piexif.js"></script>
         
         <script type="text/javascript" charset="utf-8">
+            window.onload = function(){
+                document.getElementById("idSoignantEntete").innerHTML = "Id Soignant: " + localStorage.getItem("idSoignant");
+                document.getElementById("lieuEntete").innerHTML = "Lieu : " + localStorage.getItem("lieu");
+            }
             //Counter for the number of pict (use for the the creation of HTML elements
             var compteurPictureAvant = 0;
             var compteurPictureApres = 0;
@@ -99,7 +103,8 @@
             
             //rename the File!
             //to call the function. 'renameSuccess' is an function that is used as the success event if the rename is okay
-            renameFile('somefile.xml','myapp/xml/','new.xml', renameSuccess);
+            
+            //renameFile('somefile.xml','myapp/xml/','new.xml', renameSuccess);
             
             
             
@@ -109,14 +114,19 @@
             //console.log(theFile);
             //Convert into JSON
             theResult = JSON.parse(imageURI);
-            
+            console.log("after Parsing");
+            console.log(theResult);
             //Set the attribute src with the filename (which is the path) and add it to the document
             img.src = theResult.filename;
+            
+            var fileImg = new File(imageURI);
+            console.log(fileImg);
             
             
             //After the display, we will prepare the JSON file for the image.
             //First, set everyting into the JSON format
             
+            /*
             var textToJSON = '{'+
             '"photoURI":'+imageURI+','+
             '"idSoignant":"'+localStorage.getItem("idSoignant")+'",'+
@@ -126,6 +136,7 @@
             var jsonFile = JSON.parse(textToJSON);
             console.log("jsonFile Parsed : ");
             console.log(jsonFile);
+             */
             
             //Call the function to insert metadata
             //insertData(theResult.filename);
@@ -217,6 +228,7 @@
             function getPictureAddress() {
                 // Take picture using device camera and retrieve image as base64-encoded string
                 navigator.camera.getPicture(onPhotoDataSuccessAddress, onFail, { quality: 50,
+                                            sourceType : Camera.PictureSourceType.PHOTOLIBRARY,
                                             destinationType: Camera.DestinationType.FILE_URI,
                                             encodingType : Camera.EncodingType.JPEG,
                                             saveToPhotoAlbum: true });
@@ -236,6 +248,10 @@
                                         saveToPhotoAlbum: true });
             }
         
+            function goBack(){
+                window.location.replace("lieu.html");
+            }
+        
         </script>
     </head>
     <body>
@@ -246,15 +262,24 @@
                 padding: 10px;
             }
             div{
-                padding-bottom:20px;
+                padding-top: 11px;
+                padding-bottom:10px;
             }
             .button{
                 height: 65px;
                 width: 140px;
             }
         </style>
+        
+        <input class="button" type="button" value="retour" onclick="goBack();">
+            
+        <div id="info">
+            <div id="idSoignantEntete"></div>
+            <div id="lieuEntete"></div>
+        </div>
+        
         <div>
-            <img src="img/logo-sur-pied.jpg">
+            <img id="logo" src="img/logo-sur-pied.jpg">
         </div>
         
         <h2>Photo de l'adresse</h2>

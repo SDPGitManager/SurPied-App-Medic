@@ -8,7 +8,10 @@
         <script src="js/load-image.all.min.js"></script>
         <script src="js/piexif.js"></script>
         <script type="text/javascript" charset="utf-8">
-            
+            window.onload = function(){
+                document.getElementById("idSoignantEntete").innerHTML = "Id Soignant: " + localStorage.getItem("idSoignant");
+                document.getElementById("lieuEntete").innerHTML = "Lieu : " + localStorage.getItem("lieu");
+            }
             function assignValue(value){
                 localStorage.setItem("lieu", value);
                 console.log(localStorage.getItem("lieu"));
@@ -16,16 +19,33 @@
                 window.location.replace("photo.html");
             }
         
+            function goBack(){
+                window.location.replace("index.html");
+            }
+        
         </script>
         
     </head>
     
     <body>
-            <div>
-                <img src="img/logo-sur-pied.jpg">
-            </div>
+        <style>
+        
+            .button{
+                height: 65px;
+                width: 140px;
+            }
+        </style>
+        <input class="button" type="button" value="retour" onclick="goBack();">
             
-            <h2>Selectionnez votre lieu de travail</h2>
-            <input onclick="assignValue(this.value)" type="button" value="Anna-Laberge">
+        <div id="info">
+            <div id="idSoignantEntete"></div>
+            <div id="lieuEntete"></div>
+        </div>
+        <div>
+            <img src="img/logo-sur-pied.jpg">
+        </div>
+            
+        <h2>Selectionnez votre lieu de travail</h2>
+        <input onclick="assignValue(this.value)" type="button" value="Anna-Laberge">
     </body>
 </html>
